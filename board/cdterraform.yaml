@@ -1,0 +1,78 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  terraformVersion: '1.5.7'
+  serviceConnection: 'azure-sc'
+  resourceGroup: 'hackathon-rg01'
+
+stages:
+
+# -----------------------------
+# Stage 1 - Terraform Init
+# -----------------------------
+- stage: TerraformInit
+  jobs:
+  - job: init
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(serviceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          terraform init
+
+
+# -----------------------------
+# Stage 2 - Terraform Plan
+# -----------------------------
+- stage: TerraformPlan
+  dependsOn: TerraformInit
+  jobs:
+  - job: plan
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(serviceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          terraform init
+          terraform plan
+
+
+# -----------------------------
+# Stage 3 - Terraform Apply
+# -----------------------------
+- stage: TerraformApply
+  dependsOn: TerraformPlan
+  jobs:
+  - job: apply
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(terraformVersion)
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: $(serviceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          terraform init
+          terraform apply -auto-approve
